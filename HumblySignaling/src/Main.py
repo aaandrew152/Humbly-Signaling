@@ -2,6 +2,7 @@
 Wright Fisher Model for Costly Signalling through humility
 """
 
+#import from __future__ division
 import random
 import math
 
@@ -24,8 +25,8 @@ First we define several parameters we will need later.
 r = random.Random()
 
 low_costs = [0, 10, 100]
-medium_costs = [0, 1/2, 10]
-high_costs = [0, 3/2, 1]
+medium_costs = [0, 1, 3]
+high_costs = [0, 1, 2]
 #Cost to send [no signal, signal, hidden signal]
 
 low_reveal_chance = 1/10
@@ -34,12 +35,12 @@ high_reveal_chance = 2/3
 #Chance of a type's signal being revealed
 
 low_accepted_payoff = [1, 2]
-medium_accepted_payoff = [1, 3]
-high_accepted_payoff = [1, 2]
+medium_accepted_payoff = [2, 5]
+high_accepted_payoff = [2, 5]
 #Payoffs of sender = [accepted by low receiver, high]
 
-low_receiver_payoff = [-10, 1, 10]
-high_receiver_payoff = [-10, -1, 10]
+low_receiver_payoff = [-10, 5, 10]
+high_receiver_payoff = [-10, -5, 10]
 #Payoffs of receiver = [accept low sender, medium, high]
 
 high_sender_fraction = 1/10 #Fraction of high senders
@@ -358,6 +359,14 @@ def get_sender_portion(population, strategy):
     portion = num_senders / len(population)
     return portion
 
+def get_receiver_portion(population, strategy):
+    num_receivers = 0
+    for receiver in population:
+        if receiver[strategy] == 1:
+            num_receivers += 1
+    portion = num_receivers / len(population)
+    return portion
+
 def simulate(size, time):
     """
     Starts with a random initial population and updates for many time steps
@@ -380,12 +389,16 @@ def simulate(size, time):
     
     for i in range(1, time):#Runs the simulation
         populations = update(populations, mu)
-        
+    
+    print ("These are the proportions of senders who send each strategy")    
     for sender in range(3):#Outputs sender strategy proportions
         for signal in range(3):
-            print (get_sender_portion(populations[sender], signal))
-            
+            print ("Type: " + str(sender) + " Signal: " + str(get_sender_portion(populations[sender], signal)))
+    
+    print ("These are the proportions of receivers who accept a strategy") 
+    #NOTE THESE VALUES DO NOT NEED TO SUM TO 1, a receiver may accept more than one strategy       
     for receiver in range(2):#Outputs receiver strategy's
-        pass
+        for signal in range(3):
+            print ("Type: " + str(receiver) + " Signal: " + str(get_receiver_portion(populations[receiver+3], signal)))
     
 simulate(size, time)
