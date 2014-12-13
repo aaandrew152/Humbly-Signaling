@@ -24,39 +24,38 @@ First we define several parameters we will need later.
 """
 r = random.Random()
 
-low_costs = [0, 10, 100]
-medium_costs = [0, 1, 3]
-high_costs = [0, 1, 2]
-#Cost to send [no signal, signal, hidden signal]
+low_costs = [0, 3, 3]
+medium_costs = [0, 1, 1]
+high_costs = [0, 1, 1]
+#Cost to send [no signal, signal, hidden signal] 
+#Note: the model specifies that the last two costs are equal
 
 low_reveal_chance = 1/10
 medium_reveal_chance = 1/3
-high_reveal_chance = 2/3
+high_reveal_chance = 5/6
 #Chance of a type's signal being revealed
 
 low_accepted_payoff = [1, 2]
-medium_accepted_payoff = [2, 5]
+medium_accepted_payoff = [3, 4]
 high_accepted_payoff = [2, 5]
 #Payoffs of sender = [accepted by low receiver, high]
 
-low_receiver_payoff = [-10, 5, 10]
-high_receiver_payoff = [-10, -5, 10]
+low_receiver_payoff = [-5, 2, 5]
+high_receiver_payoff = [-5, -2, 5]
 #Payoffs of receiver = [accept low sender, medium, high]
 
-high_sender_fraction = 1/10 #Fraction of high senders
-medium_sender_fraction = 1/10
-low_sender_fraction = 8/10
-assert high_sender_fraction+medium_sender_fraction+low_sender_fraction == 1
+high_sender_fraction = 2/10 #Fraction of high senders
+medium_sender_fraction = 3/10
+low_sender_fraction = 5/10
 
 high_receiver_fraction = 1/2
 low_receiver_fraction = 1/2
-assert high_receiver_fraction + low_receiver_fraction == 1
 
 w = 1 # Selection strength
-mu = 0.02 #Mutation probability
+mu = 0.05 #Mutation probability
 
 size = 100 #Total number of senders (equal to number of receivers)
-time = 500 #Total number of generations
+time = 1000 #Total number of generations
 
 sender_strategies=[0, 1, 2]#0 = no signal, 1 = a normal signal, 2 = send but hide signal
 receiver_strategies = [ [0,0,0], [0,0,1], [0,1,0], [0,1,1], 
@@ -84,10 +83,7 @@ def get_low_payoff(low_strategy, low_receiver_population, high_receiver_populati
     reveal = r.uniform(0, 1)
     
     if low_strategy == 2:
-        if reveal < low_reveal_chance:
-            temp_strat = 2#Sender revealed
-        else:
-            temp_strat = 0#Sender hidden
+        temp_strat = 2 if reveal < low_reveal_chance else 0
     else:
         temp_strat = low_strategy#Otherwise my strategy is my normal strategy
     
@@ -99,8 +95,9 @@ def get_low_payoff(low_strategy, low_receiver_population, high_receiver_populati
         if high_receiver[temp_strat] == 1:
             high_acceptances += 1
             
-    payoff = (low_accepted_payoff[0]*low_acceptances)/(size*low_receiver_fraction)
-    payoff += (low_accepted_payoff[1]*high_acceptances)/(size*high_receiver_fraction)
+    payoff = low_accepted_payoff[0]*low_acceptances
+    payoff += low_accepted_payoff[1]*high_acceptances
+    payoff /= size#Normalize based on size
     payoff -= cost
     
     return payoff
@@ -117,10 +114,7 @@ def get_medium_payoff(medium_strategy, low_receiver_population, high_receiver_po
     reveal = r.uniform(0, 1)
     
     if medium_strategy == 2:
-        if reveal < medium_reveal_chance:
-            temp_strat = 2#Sender revealed
-        else:
-            temp_strat = 0#Sender hidden
+        temp_strat = 2 if reveal < medium_reveal_chance else 0
     else:
         temp_strat = medium_strategy#Otherwise my strategy is my normal strategy
     
@@ -132,8 +126,9 @@ def get_medium_payoff(medium_strategy, low_receiver_population, high_receiver_po
         if high_receiver[temp_strat] == 1:
             high_acceptances += 1
             
-    payoff = (medium_accepted_payoff[0]*low_acceptances)/(size*low_receiver_fraction)
-    payoff += (medium_accepted_payoff[1]*high_acceptances)/(size*high_receiver_fraction)
+    payoff = medium_accepted_payoff[0]*low_acceptances
+    payoff += medium_accepted_payoff[1]*high_acceptances
+    payoff /= size#Normalize based on size
     payoff -= cost
     
     return payoff
@@ -150,10 +145,7 @@ def get_high_payoff(high_strategy, low_receiver_population, high_receiver_popula
     reveal = r.uniform(0, 1)
     
     if high_strategy == 2:
-        if reveal < high_reveal_chance:
-            temp_strat = 2#Sender revealed
-        else:
-            temp_strat = 0#Sender hidden
+        temp_strat = 2 if reveal < high_reveal_chance else 0
     else:
         temp_strat = high_strategy#Otherwise my strategy is my normal strategy
     
@@ -165,8 +157,9 @@ def get_high_payoff(high_strategy, low_receiver_population, high_receiver_popula
         if high_receiver[temp_strat] == 1:
             high_acceptances += 1
             
-    payoff = (high_accepted_payoff[0]*low_acceptances)/(size*low_receiver_fraction)
-    payoff += (high_accepted_payoff[1]*high_acceptances)/(size*high_receiver_fraction)
+    payoff = high_accepted_payoff[0]*low_acceptances
+    payoff += high_accepted_payoff[1]*high_acceptances
+    payoff /= size#Normalize based on size
     payoff -= cost
     
     return payoff
@@ -393,12 +386,12 @@ def simulate(size, time):
     print ("These are the proportions of senders who send each strategy")    
     for sender in range(3):#Outputs sender strategy proportions
         for signal in range(3):
-            print ("Type: " + str(sender) + " Signal: " + str(get_sender_portion(populations[sender], signal)))
+            print ("Type: " + str(sender) + " Signal: " + str(signal) + " " + str(get_sender_portion(populations[sender], signal)))
     
     print ("These are the proportions of receivers who accept a strategy") 
     #NOTE THESE VALUES DO NOT NEED TO SUM TO 1, a receiver may accept more than one strategy       
     for receiver in range(2):#Outputs receiver strategy's
         for signal in range(3):
-            print ("Type: " + str(receiver) + " Signal: " + str(get_receiver_portion(populations[receiver+3], signal)))
+            print ("Type: " + str(receiver) + " Signal: " + str(signal) + " "+ str(get_receiver_portion(populations[receiver+3], signal)))
     
 simulate(size, time)
